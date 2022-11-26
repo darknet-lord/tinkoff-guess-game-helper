@@ -1,0 +1,29 @@
+[package]
+name = "tinkoff_guess_game_helper"
+version = "0.1.0"
+edition = "2021"
+
+
+[[ bin ]]
+name = "console_app"
+path = "src/main.rs"
+
+[[ bin ]]
+name = "web_app"
+path = "src/web.rs"
+
+[ lib ]
+name = "tinkoff_guess_game_lib"
+path = "src/lib/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+axum = "0.5.16"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.68"
+tokio = { version = "1.0", features = ["full"] }
+tower-http = { version = "0.3.4", features = ["cors"] }
+tracing = "0.1"
+tracing-subscriber = "0.2.0"
