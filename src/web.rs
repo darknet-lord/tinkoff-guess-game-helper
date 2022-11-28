@@ -2,7 +2,7 @@
  *  $ cargo run --bin web_app
  *
  *  $ curl -H "Content-Type: application/json" -X POST http://localhost:5000/guess-word \
- *  -d '["yяgмgнyдyа"]'
+ *  -d '{"words": ["yяgмgнyдyа"]}'
  *
  *  [["ябеда","ягода"]]
  * 
@@ -35,21 +35,21 @@ async fn main() {
 }
 
 async fn root() -> &'static str {
-    "Usage: POST /guest-word/ yяgмgнyдyа"
+    "Usage: curl -H \"Content-Type: application/json\" -X POST /guest-word/ -D '[\"yяgмgнyдyа\"]'"
 }
 
-async fn guess_word_api(Json(payload): Json<Vec<String>>) -> impl IntoResponse {
-    let words = strings_to_words(payload);
-    let guesses = vec![guess_word(words)];
-    (StatusCode::OK, Json(guesses))
+async fn guess_word_api(Json(payload): Json<AttemptedWords>) -> impl IntoResponse {
+    let words = strings_to_words(payload.words);
+    let guesses = guess_word(words);
+    (StatusCode::OK, Json(Answer{words: guesses}))
 }
 
 #[derive(Deserialize)]
-struct GuessWord {
-    letters: Vec<String>,
+struct AttemptedWords{
+    words: Vec<String>,
 }
 
 #[derive(Serialize)]
-struct Word {
-    letters: String,
+struct Answer {
+    words: Vec<String>,
 }
