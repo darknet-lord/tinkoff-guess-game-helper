@@ -19,11 +19,11 @@ pub struct Letter {
 struct Stat {
     yellow_letters: HashMap<usize, char>,
     white_letters: HashMap<usize, Vec<char>>,
-    gray_letters: HashMap<usize, char>,
+    gray_letters: HashSet<char>,
 }
 
 fn has_gray_letters(stats: &Stat, dict_word: &String) -> bool {
-    for (_, letter) in &stats.gray_letters {
+    for letter in &stats.gray_letters {
         if (*dict_word).contains(*letter) {
             return true;
         }
@@ -60,7 +60,7 @@ fn has_white_in_place(stats: &Stat, dict_word: &String) -> bool {
         }
     }
     let unique_word_chars = HashSet::from_iter(dict_word.chars());
-    (wlset.difference(&unique_word_chars)).count() >= 0
+    (wlset.difference(&unique_word_chars)).count() == 0
 }
 
 fn is_matched(stats: &Stat, dict_word: &String) -> bool{
@@ -117,7 +117,7 @@ pub fn strings_to_words(strings: Vec<String>) -> Vec<Vec<Letter>> {
 
 fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
     let mut yellow_letters = HashMap::new();
-    let mut gray_letters = HashMap::new();
+    let mut gray_letters = HashSet::new();
     let mut white_letters: HashMap<usize, Vec<char>> = HashMap::new();
     for word in words {
         for (idx, letter) in word.iter().enumerate() {
@@ -130,7 +130,7 @@ fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
                         white_letters.insert(idx, vec![letter.letter]);
                     };
                 },
-                Color::Gray => {gray_letters.entry(idx).or_insert(letter.letter);},
+                Color::Gray => {gray_letters.insert(letter.letter);},
                 // _ => panic!("Undefined color"),
             }
         }
@@ -156,7 +156,7 @@ mod test {
     #[test]
     fn test_has_gray_letters() {
         let stats = Stat{
-            gray_letters: HashMap::from([(1, 'п'), (2, 'р')]),
+            gray_letters: HashSet::from(['п', 'р']),
             white_letters: HashMap::new(),
             yellow_letters: HashMap::new(),
         };
@@ -167,11 +167,21 @@ mod test {
     #[test]
     fn test_has_white_in_place() {
         let stats = Stat{
-            gray_letters: HashMap::new(),
+            gray_letters: HashSet::new(),
             white_letters: HashMap::from([(1, vec!('п')), (0, vec!('р'))]),
             yellow_letters: HashMap::new(),
         };
         assert_eq!(has_white_in_place(&stats, &String::from("привет")), true);
+    }
+
+    #[test]
+    fn test_has_white_in_place_with_wrong_stats() {
+        let stats = Stat{
+            gray_letters: HashSet::new(),
+            white_letters: HashMap::from([(0, vec!('a', 'b', 'c')), (1, vec!('d'))]),
+            yellow_letters: HashMap::new(),
+        };
+        assert_eq!(has_white_in_place(&stats, &String::from("dba")), false);
     }
 
     #[test]
@@ -209,16 +219,7 @@ mod test {
             String::from("wиgгgрgоgк"),
         ]);
         let found_words = guess_word(words);
-        let x_result = vec![
-            String::from("гурия"),
-            String::from("курия"),
-            String::from("курья"),
-            String::from("мумия"),
-            String::from("мурья"),
-            String::from("рупия"),
-            String::from("судья"),
-            String::from("фурия"),
-        ];
+        let x_result = vec![String::from("мумия")];
         assert_eq!(found_words, x_result);
     }
 }
