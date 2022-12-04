@@ -148,6 +148,29 @@ pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<String> {
     find_matches(stats)
 }
 
+pub fn initial_suggestions() -> Vec<String> {
+    let file = File::open("./data/words.txt").unwrap();
+    let reader = BufReader::new(file);
+    let mut matches = Vec::new();
+    let mut tried_chars = HashSet::new();
+    for word in reader.lines() {
+        match word {
+            Ok(w) => {
+                let unique_chars: HashSet<char> = HashSet::from_iter(w.chars());
+                if unique_chars.len() != 5 {
+                    continue;
+                };
+                if unique_chars.difference(&tried_chars).count() != 5 {
+                    continue;
+                };
+                tried_chars.extend(&unique_chars);
+                matches.push(w);
+            },
+            Err(_) => {},
+        }
+    };
+    matches
+}
 
 #[cfg(test)]
 mod test {

@@ -1,5 +1,5 @@
 use std::env;
-use tinkoff_guess_game_lib::{guess_word, strings_to_words};
+use tinkoff_guess_game_lib::{guess_word, strings_to_words, initial_suggestions};
 
 
 fn main() {
@@ -15,10 +15,13 @@ fn main() {
      */
     let args: Vec<String> = env::args().skip(1).collect();
     if args.len() == 0 {
-        panic!("Usage: cargo run yяgмgнyдyа")
+        for word in initial_suggestions() {
+            println!("{}", word);
+        };
+    } else {
+        let words = strings_to_words(args);
+        for word in guess_word(words) {
+            println!("{}", word);
+        };
     }
-    let words = strings_to_words(args);
-    for word in guess_word(words) {
-        println!("{}", word);
-    };
 }
