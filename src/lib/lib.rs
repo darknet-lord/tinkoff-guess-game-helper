@@ -54,19 +54,13 @@ fn has_white_in_place(stats: &Stat, dict_word: &String) -> bool {
         if stats.yellow_letters.contains_key(&idx) {
             continue;
         } else {
-            if stats.white_letters.contains_key(&idx) {
-                if stats.white_letters[&idx].contains(&ch) {
-                    return false;
-                } else {
-                    if wlset.contains(&ch) {
-                        wl_total_count += 1;
-                        // TODO: Fix counter and add checks.
-                    }
-                }
+            if stats.white_letters.contains_key(&idx) && stats.white_letters[&idx].contains(&ch) {
+                return false;
             }
         }
     }
-    true
+    let unique_word_chars = HashSet::from_iter(dict_word.chars());
+    (wlset.difference(&unique_word_chars)).count() >= 0
 }
 
 fn is_matched(stats: &Stat, dict_word: &String) -> bool{
@@ -106,7 +100,7 @@ pub fn string_to_letters(word: &String) -> Vec<Letter> {
     }
     let mut chunks = chars.chunks(2);
     let mut res: Vec<Letter> = Vec::new();
-    for _ in 0..4 {
+    for _ in 0..5 {
         match chunks.next() {
             Some(['g', ch]) => res.push(Letter{color: Color::Gray, letter: *ch}),
             Some(['w', ch]) => res.push(Letter{color: Color::White, letter: *ch}),
@@ -173,8 +167,8 @@ mod test {
     #[test]
     fn test_has_white_in_place() {
         let stats = Stat{
-            gray_letters: HashMap::from([(1, 'п'), (2, 'р')]),
-            white_letters: HashMap::from([(1, vec!('п')), (2, vec!('р'))]),
+            gray_letters: HashMap::new(),
+            white_letters: HashMap::from([(1, vec!('п')), (0, vec!('р'))]),
             yellow_letters: HashMap::new(),
         };
         assert_eq!(has_white_in_place(&stats, &String::from("привет")), true);
@@ -205,6 +199,27 @@ mod test {
         assert_eq!(res[0].letter, 'h');
         assert_eq!(res[1].color, Color::Yellow);
         assert_eq!(res[1].letter, 'e');
+    }
+
+    #[test]
+    fn test_guess_word(){
+        let words = strings_to_words(vec![
+            String::from("gлgеgнgтgа"),
+            String::from("gсyуgдgьyя"),
+            String::from("wиgгgрgоgк"),
+        ]);
+        let found_words = guess_word(words);
+        let x_result = vec![
+            String::from("гурия"),
+            String::from("курия"),
+            String::from("курья"),
+            String::from("мумия"),
+            String::from("мурья"),
+            String::from("рупия"),
+            String::from("судья"),
+            String::from("фурия"),
+        ];
+        assert_eq!(found_words, x_result);
     }
 }
 
