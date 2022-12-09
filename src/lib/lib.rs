@@ -22,6 +22,34 @@ struct Stat {
     gray_letters: HashSet<char>,
 }
 
+
+impl Stat {
+
+    fn validate(&self) -> (bool, Vec<String>) {
+        let mut errors = Vec::<String>::new();
+        let mut wlset = HashSet::new();
+        let vals = self.white_letters.values().cloned();
+        for val in vals {
+            for ch in val {
+                if self.gray_letters.contains(&ch) {
+                    errors.push(format!("White letter `{}` has been found in grays", &ch));
+                };
+                wlset.insert(ch);
+            }
+        }
+        let wl_total_count = wlset.len();
+        if wl_total_count > 5 {
+            errors.push(format!("Too much unique white letters: {}", wl_total_count));
+        }
+        for ch in self.yellow_letters.values() {
+            if self.gray_letters.contains(&ch) {
+               errors.push(format!("Yellow letter `{}` has been found in grays", &ch));
+            }
+        }
+        (errors.len() == 0, errors)
+    }
+}
+
 fn has_gray_letters(stats: &Stat, dict_word: &String) -> bool {
     for letter in &stats.gray_letters {
         if (*dict_word).contains(*letter) {
@@ -49,7 +77,6 @@ fn has_white_in_place(stats: &Stat, dict_word: &String) -> bool {
         }
     }
 
-    let mut wl_total_count = wlset.len();
     for (idx, ch) in dict_word.chars().enumerate() {
         if stats.yellow_letters.contains_key(&idx) {
             continue;
@@ -102,9 +129,9 @@ pub fn string_to_letters(word: &String) -> Vec<Letter> {
     let mut res: Vec<Letter> = Vec::new();
     for _ in 0..5 {
         match chunks.next() {
-            Some(['g', ch]) => res.push(Letter{color: Color::Gray, letter: *ch}),
-            Some(['w', ch]) => res.push(Letter{color: Color::White, letter: *ch}),
-            Some(['y', ch]) => res.push(Letter{color: Color::Yellow, letter: *ch}),
+            Some(['g', ch]) | Some(['^', ch]) => res.push(Letter{color: Color::Gray, letter: *ch}),
+            Some(['w', ch]) | Some(['?', ch]) => res.push(Letter{color: Color::White, letter: *ch}),
+            Some(['y', ch]) | Some(['=', ch]) => res.push(Letter{color: Color::Yellow, letter: *ch}),
             _ => {panic!("Invalid format: {}", word);},
         }
     }
@@ -136,11 +163,17 @@ fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
         }
     }
 
-    Stat {
+    let stats = Stat {
         yellow_letters: yellow_letters,
         gray_letters: gray_letters,
         white_letters: white_letters,
-    }
+    };
+
+    let (success, errors) = stats.validate();
+    if !success {
+        panic!("Errors: {:?}", errors);
+    };
+    stats
 }
 
 pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<String> {
@@ -244,6 +277,23 @@ mod test {
         let found_words = guess_word(words);
         let x_result = vec![String::from("мумия")];
         assert_eq!(found_words, x_result);
+    }
+
+    #[test]
+    fn test_validate_white_letters() {
+        let stats = Stat{
+            gray_letters: HashSet::from(['c', 'h']),
+            yellow_letters: HashMap::from([(0, 'h')]),
+            white_letters: HashMap::from([(0, vec!('a', 'b', 'c', 'd', 'e', 'f'))]),
+        };
+        let (success, errors) = stats.validate();
+        let x_errors = vec![
+            String::from("White letter `c` has been found in grays"),
+            String::from("Too much unique white letters: 6"),
+            String::from("Yellow letter `h` has been found in grays"),
+        ];
+        assert_eq!(success, false);
+        assert_eq!(errors, x_errors);
     }
 }
 
