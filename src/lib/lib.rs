@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{BufReader,prelude::*};
 use std::collections::{HashMap,HashSet};
+use rand::thread_rng;
+use rand::prelude::SliceRandom;
 
 #[derive(Debug, PartialEq)] 
 pub enum Color {
@@ -181,27 +183,27 @@ pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<String> {
     find_matches(stats)
 }
 
-pub fn initial_suggestions() -> Vec<String> {
+pub fn suggest_words() -> Vec<String> {
     let file = File::open("./data/words.txt").unwrap();
     let reader = BufReader::new(file);
+    let mut lines = reader.lines().map(|l| l.expect("Couldn't read line")).collect::<Vec<String>>();
+    lines.shuffle(&mut thread_rng());
+
+
     let mut matches = Vec::new();
-    let mut tried_chars = HashSet::new();
-    for word in reader.lines() {
-        match word {
-            Ok(w) => {
-                let unique_chars: HashSet<char> = HashSet::from_iter(w.chars());
-                if unique_chars.len() != 5 {
-                    continue;
-                };
-                if unique_chars.difference(&tried_chars).count() != 5 {
-                    continue;
-                };
-                tried_chars.extend(&unique_chars);
-                matches.push(w);
-            },
-            Err(_) => {},
-        }
-    };
+    let mut tried_chars: HashSet<char> = HashSet::new();
+
+    for word in lines {
+        let unique_chars: HashSet<char> = HashSet::from_iter(word.chars());
+        if unique_chars.len() != 5 {
+            continue;
+        };
+        if unique_chars.difference(&tried_chars).count() < 5 {
+            continue;
+        };
+        tried_chars.extend(&unique_chars);
+        matches.push(word);
+    }
     matches
 }
 
@@ -296,4 +298,3 @@ mod test {
         assert_eq!(errors, x_errors);
     }
 }
-
