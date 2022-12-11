@@ -5,11 +5,11 @@ edition = "2021"
 
 
 [[ bin ]]
-name = "console_app"
+name = "tinkoff_guess_game_helper"
 path = "src/main.rs"
 
 [[ bin ]]
-name = "web_app"
+name = "tinkoff_guess_game_helper_web"
 path = "src/web.rs"
 
 [ lib ]
