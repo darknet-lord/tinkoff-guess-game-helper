@@ -1,4 +1,7 @@
-абака
+use lazy_static::lazy_static;
+
+lazy_static!{
+    pub static ref WORDLIST: Vec<String> = "абака
 аббат
 абвер
 абзац
@@ -3480,4 +3483,5 @@
 ястык
 ясырь
 ятовь
-яхонт
+яхонт".split("\n").map(|s| s.to_string()).collect();
+}
