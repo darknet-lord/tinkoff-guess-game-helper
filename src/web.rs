@@ -24,13 +24,15 @@ use tinkoff_guess_game_lib::{guess_word, strings_to_words, suggest_words};
 
 #[tokio::main]
 async fn main() {
-    // "Usage: curl -H \"Content-Type: application/json\" -X POST /guest-word/ -D '[\"yяgмgнyдyа\"]'"
+    // "Usage: curl -H \"Content-Type: application/json\" -X POST /guest-word/ -D '{\"words\":[\"yяgмgнyдyа\"]}'"
+    let host_details = env::var("TINKOFF_GUESS_GAME_HELPER_HOST").unwrap_or("0.0.0.0:5000".to_string());
+    let addr: SocketAddr = host_details.parse().expect("TINKOFF_GUESS_GAME_HELPER_HOST is incorrect");
+
     tracing_subscriber::fmt::init();
     let app = Router::new()
         .route("/", get(root))
         .route("/guess-word", post(guess_word_api));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 5000));
     tracing::debug!("Listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -39,7 +41,7 @@ async fn main() {
 }
 
 async fn root() -> Html<String> {
-    let r = render!(MAIN_TEMPLATE, API_HOST => env::var("API_HOST").unwrap_or("http://localhost:5000".to_string()));
+    let r = render!(MAIN_TEMPLATE, API_HOST => env::var("TINKOFF_GUESS_GAME_HELPER_API").unwrap_or("http://localhost:5000".to_string()));
     Html(r)
 }
 
@@ -81,7 +83,7 @@ const MAIN_TEMPLATE: &'static str = r#"
   </style>
 </head>
 <body>
-    <h3>{{ API_HOST }}</h3>
+    <h3>{{ TINKOFF_GUESS_GAME_HELPER_API }}</h3>
     <div id="message" style="display:none; border: 1px solid gray"></div>
     {% for i in range(0, 5) %}
         <div class="word">
@@ -119,7 +121,7 @@ const MAIN_TEMPLATE: &'static str = r#"
 
         function makeGuessRequest(words) {
             console.debug("Making guess-word request with: ", words);
-            fetch('{{ API_URL }}' + '/guess-word', {
+            fetch('{{ TINKOFF_GUESS_GAME_HELPER_API }}' + '/guess-word', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
