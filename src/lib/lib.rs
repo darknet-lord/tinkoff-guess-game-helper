@@ -52,7 +52,7 @@ impl Stat {
     }
 }
 
-fn has_gray_letters(stats: &Stat, dict_word: &String) -> bool {
+fn has_gray_letters(stats: &Stat, dict_word: &str) -> bool {
     for letter in &stats.gray_letters {
         if (*dict_word).contains(*letter) {
             return true;
@@ -61,7 +61,7 @@ fn has_gray_letters(stats: &Stat, dict_word: &String) -> bool {
     return false;
 }
 
-fn has_yellow_in_place(stats: &Stat, dict_word: &String) -> bool {
+fn has_yellow_in_place(stats: &Stat, dict_word: &str) -> bool {
     for (idx, ch) in (&stats.yellow_letters).into_iter() {
         if *ch != (*dict_word).chars().nth(*idx).unwrap() {
             return false;
@@ -70,7 +70,7 @@ fn has_yellow_in_place(stats: &Stat, dict_word: &String) -> bool {
     true
 }
 
-fn has_white_in_place(stats: &Stat, dict_word: &String) -> bool {
+fn has_white_in_place(stats: &Stat, dict_word: &str) -> bool {
     let mut wlset = HashSet::new();
     let vals = stats.white_letters.values().cloned();
     for val in vals {
@@ -92,7 +92,7 @@ fn has_white_in_place(stats: &Stat, dict_word: &String) -> bool {
     (wlset.difference(&unique_word_chars)).count() == 0
 }
 
-fn is_matched(stats: &Stat, dict_word: &String) -> bool{
+fn is_matched(stats: &Stat, dict_word: &str) -> bool{
     if has_gray_letters(&stats, &dict_word) {
         return false;
     }
@@ -105,12 +105,11 @@ fn is_matched(stats: &Stat, dict_word: &String) -> bool{
     true
 }
 
-fn find_matches(stats: Stat) -> Vec<String> {
+fn find_matches(stats: Stat) -> Vec<&'static str> {
     let mut matches = Vec::new();
     for word in words::WORDLIST.iter() {
-        let w = String::from(word);
-        if is_matched(&stats, &w){
-            matches.push(w);
+        if is_matched(&stats, word){
+            matches.push(*word);
         }
     }
     matches
@@ -172,12 +171,12 @@ fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
     stats
 }
 
-pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<String> {
+pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<&'static str> {
     let stats = get_letters_stat(words);
     find_matches(stats)
 }
 
-pub fn suggest_words() -> Vec<String> {
+pub fn suggest_words() -> Vec<&'static str> {
     let mut words_copy = words::WORDLIST.clone();
     words_copy.shuffle(&mut thread_rng());
     let mut matches = Vec::new();
@@ -192,7 +191,7 @@ pub fn suggest_words() -> Vec<String> {
             continue;
         };
         tried_chars.extend(&unique_chars);
-        matches.push(String::from(word));
+        matches.push(*word);
     }
     matches
 }
