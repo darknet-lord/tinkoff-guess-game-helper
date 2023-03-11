@@ -13,20 +13,10 @@ fn main() {
      * ягода
      *
      */
+
     let args: Vec<String> = env::args().skip(1).collect();
-    if args.len() == 0 {
-        let suggestions = suggest_words();
-        if suggestions.len() == 0 {
-            println!("No suggestions. Please try again.");
-        } else {
-            for word in suggestions {
-                println!("{}", word);
-            }
-        }
-    } else {
-        let words = strings_to_words(args);
-        for word in guess_word(words) {
-            println!("{}", word);
-        };
-    }
+    let words = strings_to_words(args);
+    for word in guess_word(words) {
+        println!("{}", word);
+    };
 }

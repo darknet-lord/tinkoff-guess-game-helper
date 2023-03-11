@@ -172,11 +172,20 @@ fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
 }
 
 pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<&'static str> {
-    let stats = get_letters_stat(words);
-    find_matches(stats)
+    if words.len() == 0 {
+        suggest_words()
+    } else {
+        let stats = get_letters_stat(words);
+        find_matches(stats)
+    }
 }
 
 pub fn suggest_words() -> Vec<&'static str> {
+    vec!["смазь", "флейц", "будяк", "выгон", "причт"]
+}
+
+
+fn generate_suggestions() -> Vec<&'static str> {
     let mut words_copy = words::WORDLIST.clone();
     words_copy.shuffle(&mut thread_rng());
     let mut matches = Vec::new();
