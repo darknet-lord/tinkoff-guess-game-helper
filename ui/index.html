@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1 id="header">Tinkoff Guess Game Helper!</h1>
+
+    <script>
+      console.log(window)
+      const { invoke } = window.__TAURI__.tauri;
+
+      function getSuggestions(words) {
+        invoke('get_suggestions', words)
+          .then((response) => {
+            window.result.innerHTML = response;
+          })
+      }
+
+      function suggetWords() {
+        var words = [];
+        const elems = document.getElementsByClassName("word");
+        console.log(elems);
+        for (let i = 0; i < elems.length; i++) {
+          if (elems[i].value != '') {
+            words.push(elems[i].value)
+          }
+        }
+        if (words.length > 0) {
+          getSuggestions({'words': words});
+        }
+      }
+
+      getSuggestions({words: []});
+
+      
+    </script>
+
+    <div id="words">
+      <input class="word" type="text" /><br />
+      <input class="word" type="text" /><br />
+      <input class="word" type="text" /><br />
+      <input class="word" type="text" /><br />
+      <input class="word" type="text" /><br />
+    </div>
+    <button onclick="suggetWords()">Suggest</button>
+
+    <div id="result"></div>
+
+  </body>
+</html>
