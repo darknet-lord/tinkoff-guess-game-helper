@@ -1,6 +1,6 @@
 use std::collections::{HashMap,HashSet};
-use rand::thread_rng;
-use rand::prelude::SliceRandom;
+// use rand::thread_rng;
+// use rand::prelude::SliceRandom;
 
 mod words;
 
@@ -117,18 +117,28 @@ fn find_matches(stats: Stat) -> Vec<&'static str> {
 
 pub fn string_to_letters(word: &String) -> Vec<Letter> {
     let chars = word.chars().collect::<Vec<char>>();
-    if chars.len() != 10 {
-        panic!("String of length 10 is expected, but {} given: {}", chars.len(), word);
+    if chars.len() > 10 || chars.len() < 5 {
+        panic!("String of length from 5 to 10 chars is expected, but {} given: {}", chars.len(), word);
     }
-    let mut chunks = chars.chunks(2);
+
     let mut res: Vec<Letter> = Vec::new();
-    for _ in 0..5 {
-        match chunks.next() {
-            Some(['g', ch]) | Some(['^', ch]) => res.push(Letter{color: Color::Gray, letter: *ch}),
-            Some(['w', ch]) | Some(['?', ch]) => res.push(Letter{color: Color::White, letter: *ch}),
-            Some(['y', ch]) | Some(['=', ch]) => res.push(Letter{color: Color::Yellow, letter: *ch}),
-            _ => {panic!("Invalid format: {}", word);},
+    let first = chars.get(0).unwrap();
+    if first.is_alphabetic() {
+        res.push(Letter { color: Color::Gray, letter: *first });
+    }
+
+    let mut prev = first;
+    for ch in chars.iter().skip(1) {
+        if *ch != '^' || *ch != '?' || *ch != '=' {
+            if ch.is_alphabetic() && (prev.is_alphabetic() || *prev == '^') {
+                res.push(Letter { color: Color::Gray, letter: *ch });
+            } else if *prev == '?' {
+                res.push(Letter { color: Color::White, letter: *ch });
+            } else if *prev == '=' {
+                res.push(Letter { color: Color::Yellow, letter: *ch });
+            }
         }
+        prev = ch;
     }
     res
 }
@@ -153,7 +163,6 @@ fn get_letters_stat(words: Vec<Vec<Letter>>) -> Stat {
                     };
                 },
                 Color::Gray => {gray_letters.insert(letter.letter);},
-                // _ => panic!("Undefined color"),
             }
         }
     }
@@ -184,7 +193,7 @@ pub fn suggest_words() -> Vec<&'static str> {
     vec!["смазь", "флейц", "будяк", "выгон", "причт"]
 }
 
-
+/*
 fn generate_suggestions() -> Vec<&'static str> {
     let mut words_copy = words::WORDLIST.clone();
     words_copy.shuffle(&mut thread_rng());
@@ -204,6 +213,7 @@ fn generate_suggestions() -> Vec<&'static str> {
     }
     matches
 }
+*/
 
 #[cfg(test)]
 mod test {
@@ -243,7 +253,7 @@ mod test {
     #[test]
     #[should_panic]
     fn test_word_to_letters_broken_format_should_panic() {
-        string_to_letters(&String::from("hello"));
+        string_to_letters(&String::from("ello"));
     }
 
     #[test]
@@ -260,7 +270,7 @@ mod test {
 
     #[test]
     fn test_word_to_letters() {
-        let res = string_to_letters(&String::from("ghyeglylwo"));
+        let res = string_to_letters(&String::from("h=el=l?o"));
         assert_eq!(res[0].color, Color::Gray);
         assert_eq!(res[0].letter, 'h');
         assert_eq!(res[1].color, Color::Yellow);
@@ -270,9 +280,9 @@ mod test {
     #[test]
     fn test_guess_word(){
         let words = strings_to_words(vec![
-            String::from("gлgеgнgтgа"),
-            String::from("gсyуgдgьyя"),
-            String::from("wиgгgрgоgк"),
+            String::from("лента"),
+            String::from("с=удь=я"),
+            String::from("?игрок"),
         ]);
         let found_words = guess_word(words);
         let x_result = vec![String::from("мумия")];
