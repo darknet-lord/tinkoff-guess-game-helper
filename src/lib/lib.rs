@@ -1,6 +1,7 @@
 use std::collections::{HashMap,HashSet};
 use rand::{thread_rng, Rng};
-use rand::prelude::SliceRandom;
+// use rand::thread_rng;
+// use rand::prelude::SliceRandom;
 
 mod words;
 
