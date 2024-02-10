@@ -1,7 +1,5 @@
-use std::collections::{HashMap,HashSet};
+use std::{char, collections::{HashMap,HashSet}};
 use rand::{thread_rng, Rng};
-// use rand::thread_rng;
-// use rand::prelude::SliceRandom;
 
 mod words;
 
@@ -27,10 +25,10 @@ struct Stat {
 
 
 impl Stat {
-
     fn validate(&self) -> (bool, Vec<String>) {
+        let mut wlset = HashSet::<char>::new();
         let mut errors = Vec::<String>::new();
-        let mut wlset = HashSet::new();
+
         let vals = self.white_letters.values().cloned();
         for val in vals {
             for ch in val {
@@ -51,69 +49,34 @@ impl Stat {
         }
         (errors.len() == 0, errors)
     }
-}
 
-fn has_gray_letters(stats: &Stat, dict_word: &str) -> bool {
-    for letter in &stats.gray_letters {
-        if (*dict_word).contains(*letter) {
-            return true;
-        }
+    fn has_gray_letters(self: &Stat, dict_word: &str) -> bool {
+        self.gray_letters.iter().any(|l| dict_word.contains(*l))
     }
-    return false;
-}
 
-fn has_yellow_in_place(stats: &Stat, dict_word: &str) -> bool {
-    for (idx, ch) in (&stats.yellow_letters).into_iter() {
-        if *ch != (*dict_word).chars().nth(*idx).unwrap() {
+    fn has_yellow_in_place(self: &Stat, dict_word: &str) -> bool {
+        !self.yellow_letters.iter().any(|(idx, ch)| *ch != (*dict_word).chars().nth(*idx).unwrap())
+    }
+
+    fn has_white_in_place(self: &Stat, dict_word: &str) -> bool {
+        if !dict_word.chars().enumerate().any(|(idx, ch)| {
+            !self.yellow_letters.contains_key(&idx) || (self.white_letters.contains_key(&idx) && self.white_letters[&idx].contains(&ch))
+        }) {
             return false;
         }
-    }
-    true
-}
-
-fn has_white_in_place(stats: &Stat, dict_word: &str) -> bool {
-    let mut wlset = HashSet::new();
-    let vals = stats.white_letters.values().cloned();
-    for val in vals {
-        for ch in val {
-            wlset.insert(ch);
-        }
+        let unique_word_chars = HashSet::from_iter(dict_word.chars());
+        let wlset: HashSet<char> = self.white_letters.values().flatten().map(|ch| *ch).collect();
+        (wlset.difference(&unique_word_chars)).count() == 0
     }
 
-    for (idx, ch) in dict_word.chars().enumerate() {
-        if stats.yellow_letters.contains_key(&idx) {
-            continue;
-        } else {
-            if stats.white_letters.contains_key(&idx) && stats.white_letters[&idx].contains(&ch) {
-                return false;
-            }
-        }
+    fn is_matched(self: &Stat, dict_word: &str) -> bool{
+        !(self.has_gray_letters(&dict_word) || !self.has_yellow_in_place(&dict_word) || !self.has_white_in_place(&dict_word))
     }
-    let unique_word_chars = HashSet::from_iter(dict_word.chars());
-    (wlset.difference(&unique_word_chars)).count() == 0
-}
 
-fn is_matched(stats: &Stat, dict_word: &str) -> bool{
-    if has_gray_letters(&stats, &dict_word) {
-        return false;
-    }
-    if !has_yellow_in_place(&stats, &dict_word) {
-        return false;
-    }
-    if !has_white_in_place(&stats, &dict_word) {
-        return false;
-    }
-    true
 }
 
 fn find_matches(stats: Stat) -> Vec<&'static str> {
-    let mut matches = Vec::new();
-    for word in words::WORDLIST.iter() {
-        if is_matched(&stats, word){
-            matches.push(*word);
-        }
-    }
-    matches
+    words::WORDLIST.iter().filter(|word| stats.is_matched(word)).map(|w| *w).collect()
 }
 
 pub fn string_to_letters(word: &String) -> Vec<Letter> {
@@ -121,7 +84,6 @@ pub fn string_to_letters(word: &String) -> Vec<Letter> {
     if chars.len() > 10 || chars.len() < 5 {
         panic!("String of length from 5 to 10 chars is expected, but {} given: {}", chars.len(), word);
     }
-
     let mut res: Vec<Letter> = Vec::new();
     let first = chars.get(0).unwrap();
     if first.is_alphabetic() {
@@ -129,7 +91,7 @@ pub fn string_to_letters(word: &String) -> Vec<Letter> {
     }
 
     let mut prev = first;
-    for ch in chars.iter().skip(1) {
+    for (idx, ch) in chars.iter().skip(1).enumerate() {
         if *ch != '^' || *ch != '?' || *ch != '=' {
             if ch.is_alphabetic() && (prev.is_alphabetic() || *prev == '^') {
                 res.push(Letter { color: Color::Gray, letter: *ch });
@@ -191,7 +153,7 @@ pub fn guess_word(words: Vec<Vec<Letter>>) -> Vec<&'static str> {
 }
 
 pub fn suggest_words() -> Vec<&'static str> {
-    let mut words = vec![
+    let words = vec![
         vec!["смазь", "флейц", "будяк", "выгон", "причт"],
         vec!["плица", "гнусь", "вздор", "тюфяк", "мышей"],
         vec!["дымка", "овсец", "хлябь", "югрич", "шпунт"],
@@ -246,8 +208,8 @@ mod test {
             white_letters: HashMap::new(),
             yellow_letters: HashMap::new(),
         };
-        assert_eq!(has_gray_letters(&stats, &String::from("привет")), true);
-        assert_eq!(has_gray_letters(&stats, &String::from("нет")), false);
+        assert_eq!(stats.has_gray_letters(&String::from("привет")), true);
+        assert_eq!(stats.has_gray_letters(&String::from("нет")), false);
     }
 
     #[test]
@@ -257,7 +219,7 @@ mod test {
             white_letters: HashMap::from([(1, vec!('п')), (0, vec!('р'))]),
             yellow_letters: HashMap::new(),
         };
-        assert_eq!(has_white_in_place(&stats, &String::from("привет")), true);
+        assert_eq!(stats.has_white_in_place(&String::from("привет")), true);
     }
 
     #[test]
@@ -267,7 +229,7 @@ mod test {
             white_letters: HashMap::from([(0, vec!('a', 'b', 'c')), (1, vec!('d'))]),
             yellow_letters: HashMap::new(),
         };
-        assert_eq!(has_white_in_place(&stats, &String::from("dba")), false);
+        assert_eq!(stats.has_white_in_place(&String::from("dba")), false);
     }
 
     #[test]
@@ -325,4 +287,5 @@ mod test {
         assert_eq!(success, false);
         assert_eq!(errors, x_errors);
     }
+
 }
