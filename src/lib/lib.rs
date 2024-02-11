@@ -1,5 +1,6 @@
 use std::{char, collections::{HashMap,HashSet}};
 use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
 
 mod words;
 
@@ -169,33 +170,29 @@ pub fn suggest_words() -> Vec<&'static str> {
     words[n].clone()
 }
 
-// fn _makee_suggestions() -> Vec<&'static str> {
-//     let mut words_copy = words::WORDLIST.clone();
-//     words_copy.shuffle(&mut thread_rng());
-//     let mut matches = Vec::new();
-//     let mut tried_chars: HashSet<char> = HashSet::new();
-//
-//     for word in words_copy.iter() {
-//         let unique_chars: HashSet<char> = HashSet::from_iter(word.chars());
-//         if unique_chars.len() != 5 {
-//             continue;
-//         };
-//         if unique_chars.difference(&tried_chars).count() < 5 {
-//             continue;
-//         };
-//         tried_chars.extend(&unique_chars);
-//         matches.push(*word);
-//     }
-//     matches
-// }
-// pub fn make_suggestions() {
-//    for i in 1..1000 {
-//        let suggestions = generate_suggestions();
-//        if suggestions.len() > 4 {
-//            println!("{:?}", suggestions);
-//        }
-//    }
-// }
+pub fn find_optimal_words() -> Vec<&'static str> {
+    let mut words_copy = words::WORDLIST.clone();
+    words_copy.shuffle(&mut thread_rng());
+    let mut matches = Vec::new();
+    let mut tried_chars: HashSet<char> = HashSet::new();
+
+    for word in words_copy.iter() {
+        let unique_chars: HashSet<char> = HashSet::from_iter(word.chars());
+        if unique_chars.len() != 5 {
+            continue;
+        };
+        if unique_chars.difference(&tried_chars).count() < 5 {
+            continue;
+        };
+        tried_chars.extend(&unique_chars);
+        matches.push(*word);
+    }
+    matches
+}
+
+pub fn get_suggestions() -> Vec<Vec<&'static str>> {
+    (1..=1000).into_iter().map(|_| find_optimal_words()).filter(|suggestions| suggestions.len() > 4).collect()
+}
 
 #[cfg(test)]
 mod test {
